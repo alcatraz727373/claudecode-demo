@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code — Engineering Team Demo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg-primary: #0a0a0f;
+    --bg-secondary: #12121a;
+    --bg-card: #1a1a2e;
+    --bg-card-hover: #222240;
+    --accent-orange: #f97316;
+    --accent-amber: #f59e0b;
+    --accent-blue: #3b82f6;
+    --accent-purple: #8b5cf6;
+    --accent-green: #10b981;
+    --accent-cyan: #06b6d4;
+    --accent-pink: #ec4899;
+    --accent-red: #ef4444;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border: #1e293b;
+    --glow-orange: rgba(249, 115, 22, 0.3);
+    --glow-blue: rgba(59, 130, 246, 0.3);
+    --glow-purple: rgba(139, 92, 246, 0.3);
+  }
+
+  /* ── Light Theme ── */
+  [data-theme="light"] {
+    --bg-primary: #f5f3f0;
+    --bg-secondary: #edeae6;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f9f8f6;
+    --accent-orange: #d9620b;
+    --accent-amber: #c77d08;
+    --accent-blue: #2563eb;
+    --accent-purple: #7c3aed;
+    --accent-green: #059669;
+    --accent-cyan: #0891b2;
+    --accent-pink: #db2777;
+    --accent-red: #dc2626;
+    --text-primary: #1e1b18;
+    --text-secondary: #57534e;
+    --text-muted: #78716c;
+    --border: #d6d3d1;
+    --glow-orange: rgba(217, 98, 11, 0.12);
+    --glow-blue: rgba(37, 99, 235, 0.12);
+    --glow-purple: rgba(124, 58, 237, 0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    line-height: 1.6;
+    transition: background 0.4s ease, color 0.4s ease;
+  }
+
+  /* ── Navigation ── */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: rgba(10, 10, 15, 0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+    transition: transform 0.3s, background 0.4s ease, border-color 0.4s ease;
+  }
+  .nav.hidden { transform: translateY(-100%); }
+  .nav-brand {
+    font-weight: 800; font-size: 1.1rem;
+    background: linear-gradient(135deg, var(--accent-orange), var(--accent-amber));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .nav-brand svg { width: 28px; height: 28px; }
+  .nav-links { display: flex; gap: 0.25rem; }
+  .nav-links a {
+    color: var(--text-secondary); text-decoration: none; font-size: 0.8rem;
+    padding: 0.4rem 0.75rem; border-radius: 6px; transition: all 0.2s;
+    font-weight: 500; white-space: nowrap;
+  }
+  .nav-links a:hover, .nav-links a.active {
+    color: var(--text-primary); background: var(--bg-card);
+  }
+  .slide-counter {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+    color: var(--text-muted); min-width: 60px; text-align: right;
+  }
+  .progress-bar {
+    position: fixed; top: 60px; left: 0; height: 3px; z-index: 999;
+    background: linear-gradient(90deg, var(--accent-orange), var(--accent-amber), var(--accent-purple));
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px var(--glow-orange);
+  }
+
+  /* ── Slide Container ── */
+  .slides-container {
+    scroll-snap-type: y mandatory;
+    overflow-y: auto;
+    height: 100vh;
+    scroll-behavior: smooth;
+  }
+
+  .slide {
+    min-height: 100vh;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 4rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .slide-inner.visible {
+    opacity: 1; transform: translateY(0);
+  }
+
+  /* ── Background Effects ── */
+  .bg-grid {
+    position: absolute; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+  .bg-glow {
+    position: absolute; border-radius: 50%; filter: blur(120px);
+    opacity: 0.15; z-index: 0; pointer-events: none;
+  }
+  .slide-inner { position: relative; z-index: 1; }
+
+  /* ── Typography ── */
+  .section-label {
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 3px;
+    text-transform: uppercase; margin-bottom: 1rem;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.35rem 1rem; border-radius: 20px;
+  }
+  .section-label.orange { color: var(--accent-orange); background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.2); }
+  .section-label.blue { color: var(--accent-blue); background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); }
+  .section-label.purple { color: var(--accent-purple); background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.2); }
+  .section-label.green { color: var(--accent-green); background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); }
+  .section-label.pink { color: var(--accent-pink); background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.2); }
+  .section-label.cyan { color: var(--accent-cyan); background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.2); }
+  .section-label.red { color: var(--accent-red); background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); }
+  .section-label.amber { color: var(--accent-amber); background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); }
+
+  h1 {
+    font-size: 3.5rem; font-weight: 900; line-height: 1.1;
+    margin-bottom: 1.5rem; letter-spacing: -1.5px;
+  }
+  h2 {
+    font-size: 2.5rem; font-weight: 800; line-height: 1.15;
+    margin-bottom: 1rem; letter-spacing: -1px;
+  }
+  h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .subtitle {
+    font-size: 1.25rem; color: var(--text-secondary);
+    max-width: 700px; line-height: 1.7; font-weight: 400;
+  }
+  .gradient-text {
+    background: linear-gradient(135deg, var(--accent-orange), var(--accent-amber));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .gradient-blue {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .gradient-purple {
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .gradient-green {
+    background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  /* ── Cards ── */
+  .card-grid {
+    display: grid; gap: 1.25rem;
+    margin-top: 2rem;
+  }
+  .card-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .card-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .card-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.75rem;
+    transition: all 0.3s ease, background 0.4s ease, border-color 0.4s ease;
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 3px; opacity: 0; transition: opacity 0.3s;
+  }
+  .card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,0.1); background: var(--bg-card-hover); }
+  .card:hover::before { opacity: 1; }
+  .card.orange::before { background: linear-gradient(90deg, var(--accent-orange), var(--accent-amber)); }
+  .card.blue::before { background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan)); }
+  .card.purple::before { background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink)); }
+  .card.green::before { background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan)); }
+  .card.pink::before { background: linear-gradient(90deg, var(--accent-pink), var(--accent-purple)); }
+  .card.cyan::before { background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue)); }
+  .card.amber::before { background: linear-gradient(90deg, var(--accent-amber), var(--accent-orange)); }
+  .card.red::before { background: linear-gradient(90deg, var(--accent-red), var(--accent-pink)); }
+
+  .card-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; margin-bottom: 1rem;
+  }
+  .card-icon.orange { background: rgba(249,115,22,0.15); color: var(--accent-orange); }
+  .card-icon.blue { background: rgba(59,130,246,0.15); color: var(--accent-blue); }
+  .card-icon.purple { background: rgba(139,92,246,0.15); color: var(--accent-purple); }
+  .card-icon.green { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+  .card-icon.pink { background: rgba(236,72,153,0.15); color: var(--accent-pink); }
+  .card-icon.cyan { background: rgba(6,182,212,0.15); color: var(--accent-cyan); }
+  .card-icon.amber { background: rgba(245,158,11,0.15); color: var(--accent-amber); }
+  .card-icon.red { background: rgba(239,68,68,0.15); color: var(--accent-red); }
+
+  .card h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+  .card p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+  .card ul { list-style: none; padding: 0; }
+  .card ul li {
+    font-size: 0.88rem; color: var(--text-secondary);
+    padding: 0.35rem 0; padding-left: 1.25rem; position: relative;
+  }
+  .card ul li::before {
+    content: ''; position: absolute; left: 0; top: 0.75rem;
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+  .card.orange ul li::before { background: var(--accent-orange); }
+  .card.blue ul li::before { background: var(--accent-blue); }
+  .card.purple ul li::before { background: var(--accent-purple); }
+  .card.green ul li::before { background: var(--accent-green); }
+  .card.pink ul li::before { background: var(--accent-pink); }
+  .card.cyan ul li::before { background: var(--accent-cyan); }
+  .card.amber ul li::before { background: var(--accent-amber); }
+  .card.red ul li::before { background: var(--accent-red); }
+
+  /* ── Terminal / Code Blocks ── */
+  .terminal {
+    background: #0d1117; border: 1px solid #21262d;
+    border-radius: 12px; overflow: hidden;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;
+    margin-top: 1.5rem;
+  }
+  .terminal-header {
+    background: #161b22; padding: 0.75rem 1rem;
+    display: flex; align-items: center; gap: 0.5rem;
+    border-bottom: 1px solid #21262d;
+  }
+  .terminal-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+  }
+  .terminal-dot.red { background: #ff5f57; }
+  .terminal-dot.yellow { background: #febc2e; }
+  .terminal-dot.green { background: #28c840; }
+  .terminal-title {
+    color: var(--text-muted); font-size: 0.75rem; margin-left: 0.5rem;
+  }
+  .terminal-body { padding: 1.25rem; line-height: 1.8; }
+  .terminal-line { display: flex; gap: 0.5rem; margin-bottom: 0.25rem; }
+  .terminal-prompt { color: var(--accent-green); white-space: nowrap; }
+  .terminal-cmd { color: var(--text-primary); }
+  .terminal-output { color: var(--text-muted); padding-left: 1.5rem; }
+  .terminal-comment { color: #6e7681; font-style: italic; }
+  .terminal-highlight { color: var(--accent-amber); }
+  .terminal-blue { color: var(--accent-blue); }
+  .terminal-purple { color: var(--accent-purple); }
+  .terminal-green { color: var(--accent-green); }
+  .terminal-cyan { color: var(--accent-cyan); }
+
+  /* ── Flow Diagrams ── */
+  .flow-horizontal {
+    display: flex; align-items: center; gap: 0;
+    margin: 2rem 0; flex-wrap: wrap; justify-content: center;
+  }
+  .flow-step {
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; padding: 1rem;
+    flex: 0 0 auto;
+  }
+  .flow-icon {
+    width: 64px; height: 64px; border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.75rem; margin-bottom: 0.75rem;
+    border: 2px solid;
+  }
+  .flow-icon.orange { background: rgba(249,115,22,0.1); border-color: rgba(249,115,22,0.3); color: var(--accent-orange); }
+  .flow-icon.blue { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); color: var(--accent-blue); }
+  .flow-icon.purple { background: rgba(139,92,246,0.1); border-color: rgba(139,92,246,0.3); color: var(--accent-purple); }
+  .flow-icon.green { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: var(--accent-green); }
+  .flow-icon.cyan { background: rgba(6,182,212,0.1); border-color: rgba(6,182,212,0.3); color: var(--accent-cyan); }
+  .flow-icon.pink { background: rgba(236,72,153,0.1); border-color: rgba(236,72,153,0.3); color: var(--accent-pink); }
+  .flow-icon.amber { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); color: var(--accent-amber); }
+  .flow-step-label { font-size: 0.8rem; font-weight: 600; margin-bottom: 0.2rem; }
+  .flow-step-desc { font-size: 0.7rem; color: var(--text-muted); max-width: 100px; }
+  .flow-arrow {
+    color: var(--text-muted); font-size: 1.5rem; flex-shrink: 0;
+    margin: 0 0.25rem;
+  }
+
+  /* ── Timeline ── */
+  .timeline {
+    position: relative; padding-left: 2.5rem; margin-top: 2rem;
+  }
+  .timeline::before {
+    content: ''; position: absolute; left: 12px; top: 0; bottom: 0;
+    width: 2px; background: linear-gradient(180deg, var(--accent-orange), var(--accent-purple), var(--accent-blue));
+  }
+  .timeline-item {
+    position: relative; margin-bottom: 1.75rem;
+    padding: 1.25rem; background: var(--bg-card);
+    border-radius: 12px; border: 1px solid var(--border);
+  }
+  .timeline-item::before {
+    content: ''; position: absolute; left: -2.15rem; top: 1.5rem;
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 3px solid; background: var(--bg-primary);
+  }
+  .timeline-item:nth-child(1)::before { border-color: var(--accent-orange); }
+  .timeline-item:nth-child(2)::before { border-color: var(--accent-amber); }
+  .timeline-item:nth-child(3)::before { border-color: var(--accent-purple); }
+  .timeline-item:nth-child(4)::before { border-color: var(--accent-blue); }
+  .timeline-item:nth-child(5)::before { border-color: var(--accent-green); }
+  .timeline-item:nth-child(6)::before { border-color: var(--accent-cyan); }
+  .timeline-item h3 { font-size: 1rem; }
+  .timeline-item p { font-size: 0.85rem; color: var(--text-secondary); }
+
+  /* ── Diagram: Architecture ── */
+  .arch-diagram {
+    display: flex; flex-direction: column; gap: 1.5rem;
+    margin-top: 2rem; align-items: center;
+  }
+  .arch-layer {
+    display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+    position: relative; width: 100%;
+  }
+  .arch-layer-label {
+    position: absolute; left: -0.5rem; top: 50%; transform: translateY(-50%) rotate(-90deg);
+    font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;
+    color: var(--text-muted); white-space: nowrap;
+  }
+  .arch-box {
+    padding: 0.75rem 1.25rem; border-radius: 10px;
+    font-size: 0.8rem; font-weight: 600; text-align: center;
+    border: 1px solid; min-width: 120px;
+  }
+  .arch-box.orange { background: rgba(249,115,22,0.1); border-color: rgba(249,115,22,0.3); color: var(--accent-orange); }
+  .arch-box.blue { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); color: var(--accent-blue); }
+  .arch-box.purple { background: rgba(139,92,246,0.1); border-color: rgba(139,92,246,0.3); color: var(--accent-purple); }
+  .arch-box.green { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: var(--accent-green); }
+  .arch-box.cyan { background: rgba(6,182,212,0.1); border-color: rgba(6,182,212,0.3); color: var(--accent-cyan); }
+  .arch-box.pink { background: rgba(236,72,153,0.1); border-color: rgba(236,72,153,0.3); color: var(--accent-pink); }
+  .arch-box.amber { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); color: var(--accent-amber); }
+  .arch-connector {
+    text-align: center; color: var(--text-muted); font-size: 1.25rem;
+    letter-spacing: 8px;
+  }
+
+  /* ── Q&A badge ── */
+  .qa-badge {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.25);
+    color: var(--accent-purple); font-size: 0.7rem; font-weight: 700;
+    padding: 0.25rem 0.75rem; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.75rem;
+  }
+
+  /* ── Stat boxes ── */
+  .stat-row {
+    display: flex; gap: 1.5rem; margin: 2rem 0; flex-wrap: wrap;
+  }
+  .stat-box {
+    flex: 1; min-width: 150px; text-align: center;
+    padding: 1.5rem; background: var(--bg-card);
+    border-radius: 12px; border: 1px solid var(--border);
+  }
+  .stat-number {
+    font-size: 2.5rem; font-weight: 900; line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+  .stat-label {
+    font-size: 0.8rem; color: var(--text-muted); font-weight: 500;
+  }
+
+  /* ── Expandable sections ── */
+  .expandable { margin-top: 1rem; }
+  .expandable-header {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 1rem 1.25rem; background: var(--bg-card);
+    border: 1px solid var(--border); border-radius: 12px;
+    cursor: pointer; transition: all 0.2s; user-select: none;
+    margin-bottom: 0.5rem;
+  }
+  .expandable-header:hover { background: var(--bg-card-hover); }
+  .expandable-header .chevron {
+    transition: transform 0.3s; font-size: 0.8rem; color: var(--text-muted);
+  }
+  .expandable-header.open .chevron { transform: rotate(90deg); }
+  .expandable-header h3 { font-size: 0.95rem; margin: 0; }
+  .expandable-content {
+    max-height: 0; overflow: hidden; transition: max-height 0.4s ease;
+    padding: 0 1.25rem;
+  }
+  .expandable-content.open {
+    max-height: 1000px; padding: 0.75rem 1.25rem 1.25rem;
+  }
+  .expandable-content p, .expandable-content li {
+    font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7;
+  }
+  .expandable-content ul { padding-left: 1.25rem; }
+  .expandable-content li { margin-bottom: 0.3rem; }
+
+  /* ── Two-col layout ── */
+  .two-col {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 2rem; margin-top: 1.5rem; align-items: start;
+  }
+
+  /* ── Key-value list ── */
+  .kv-list { margin-top: 1rem; }
+  .kv-item {
+    display: flex; gap: 1rem; padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    align-items: flex-start;
+  }
+  .kv-key {
+    font-size: 0.8rem; font-weight: 600; min-width: 140px;
+    color: var(--text-primary); flex-shrink: 0;
+  }
+  .kv-val { font-size: 0.85rem; color: var(--text-secondary); }
+
+  /* ── Keyboard shortcuts ── */
+  .keyboard-nav {
+    position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 1000;
+    display: flex; gap: 0.5rem; align-items: center;
+  }
+  .kbd {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 36px; height: 36px; padding: 0 0.5rem;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem; color: var(--text-secondary);
+    cursor: pointer; transition: all 0.2s; user-select: none;
+  }
+  .kbd:hover { background: var(--bg-card-hover); color: var(--text-primary); border-color: var(--accent-orange); }
+  .kbd:active { transform: scale(0.95); }
+  .kbd-hint { font-size: 0.7rem; color: var(--text-muted); margin-right: 0.5rem; }
+
+  /* ── Title slide special ── */
+  .title-slide {
+    text-align: center;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .title-logo {
+    width: 80px; height: 80px; margin-bottom: 2rem;
+    border-radius: 20px; padding: 16px;
+    background: linear-gradient(135deg, rgba(249,115,22,0.15), rgba(139,92,246,0.15));
+    border: 1px solid rgba(249,115,22,0.2);
+    display: flex; align-items: center; justify-content: center;
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .title-slide h1 { font-size: 4.5rem; letter-spacing: -2.5px; }
+  .title-meta {
+    display: flex; gap: 2rem; margin-top: 2rem; flex-wrap: wrap; justify-content: center;
+  }
+  .title-meta-item {
+    font-size: 0.85rem; color: var(--text-muted);
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+
+  /* ── Animated typing ── */
+  .typing-line {
+    overflow: hidden; white-space: nowrap;
+    border-right: 2px solid var(--accent-green);
+    animation: typing 2s steps(40) forwards, blink 0.7s step-end infinite;
+    width: 0;
+  }
+  .typing-line.active { width: 100%; }
+  @keyframes typing { from { width: 0 } to { width: 100% } }
+  @keyframes blink { 50% { border-color: transparent } }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .slide { padding: 80px 1.5rem 1.5rem; }
+    h1 { font-size: 2.5rem; }
+    h2 { font-size: 1.75rem; }
+    .title-slide h1 { font-size: 2.75rem; }
+    .card-grid.cols-3, .card-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+    .two-col { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    .flow-horizontal { gap: 0.5rem; }
+    .flow-step { padding: 0.5rem; }
+    .flow-arrow { font-size: 1rem; }
+  }
+  @media (max-width: 600px) {
+    .card-grid.cols-2, .card-grid.cols-3, .card-grid.cols-4 { grid-template-columns: 1fr; }
+    .stat-row { flex-direction: column; }
+  }
+
+  /* ── Misc ── */
+  .divider {
+    width: 60px; height: 4px; border-radius: 2px; margin: 1.5rem 0;
+    background: linear-gradient(90deg, var(--accent-orange), var(--accent-amber));
+  }
+  .note {
+    font-size: 0.8rem; color: var(--text-muted);
+    padding: 0.75rem 1rem; background: rgba(245,158,11,0.05);
+    border-left: 3px solid var(--accent-amber);
+    border-radius: 0 8px 8px 0; margin-top: 1rem;
+  }
+  .tag {
+    display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px;
+    font-size: 0.7rem; font-weight: 600; margin: 0.15rem;
+  }
+  .tag.orange { background: rgba(249,115,22,0.15); color: var(--accent-orange); }
+  .tag.blue { background: rgba(59,130,246,0.15); color: var(--accent-blue); }
+  .tag.purple { background: rgba(139,92,246,0.15); color: var(--accent-purple); }
+  .tag.green { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+
+  /* ── Light Theme Overrides (hardcoded colors) ── */
+  [data-theme="light"] .nav {
+    background: rgba(245, 243, 240, 0.88);
+  }
+  [data-theme="light"] .bg-grid {
+    background-image:
+      linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+  }
+  [data-theme="light"] .bg-glow { opacity: 0.08; }
+  [data-theme="light"] .card:hover {
+    border-color: rgba(0,0,0,0.12);
+    background: var(--bg-card-hover);
+  }
+  [data-theme="light"] .terminal {
+    background: #1e1e2e; border-color: #313244;
+  }
+  [data-theme="light"] .terminal-header {
+    background: #181825; border-bottom-color: #313244;
+  }
+  [data-theme="light"] .terminal-body { color: #cdd6f4; }
+  [data-theme="light"] .terminal-cmd { color: #cdd6f4; }
+  [data-theme="light"] .terminal-output { color: #a6adc8; }
+  [data-theme="light"] .terminal-comment { color: #6c7086; }
+  [data-theme="light"] .kv-item {
+    border-bottom-color: rgba(0,0,0,0.06);
+  }
+  [data-theme="light"] .timeline-item::before {
+    background: var(--bg-primary);
+  }
+  [data-theme="light"] .note {
+    background: rgba(197, 125, 8, 0.06);
+  }
+  [data-theme="light"] .section-label.orange { background: rgba(217,98,11,0.08); border-color: rgba(217,98,11,0.18); }
+  [data-theme="light"] .section-label.blue { background: rgba(37,99,235,0.08); border-color: rgba(37,99,235,0.18); }
+  [data-theme="light"] .section-label.purple { background: rgba(124,58,237,0.08); border-color: rgba(124,58,237,0.18); }
+  [data-theme="light"] .section-label.green { background: rgba(5,150,105,0.08); border-color: rgba(5,150,105,0.18); }
+  [data-theme="light"] .section-label.pink { background: rgba(219,39,119,0.08); border-color: rgba(219,39,119,0.18); }
+  [data-theme="light"] .section-label.cyan { background: rgba(8,145,178,0.08); border-color: rgba(8,145,178,0.18); }
+  [data-theme="light"] .section-label.red { background: rgba(220,38,38,0.08); border-color: rgba(220,38,38,0.18); }
+  [data-theme="light"] .section-label.amber { background: rgba(199,125,8,0.08); border-color: rgba(199,125,8,0.18); }
+  [data-theme="light"] .card-icon.orange { background: rgba(217,98,11,0.1); }
+  [data-theme="light"] .card-icon.blue { background: rgba(37,99,235,0.1); }
+  [data-theme="light"] .card-icon.purple { background: rgba(124,58,237,0.1); }
+  [data-theme="light"] .card-icon.green { background: rgba(5,150,105,0.1); }
+  [data-theme="light"] .card-icon.pink { background: rgba(219,39,119,0.1); }
+  [data-theme="light"] .card-icon.cyan { background: rgba(8,145,178,0.1); }
+  [data-theme="light"] .card-icon.amber { background: rgba(199,125,8,0.1); }
+  [data-theme="light"] .card-icon.red { background: rgba(220,38,38,0.1); }
+  [data-theme="light"] .arch-box.orange { background: rgba(217,98,11,0.06); border-color: rgba(217,98,11,0.25); }
+  [data-theme="light"] .arch-box.blue { background: rgba(37,99,235,0.06); border-color: rgba(37,99,235,0.25); }
+  [data-theme="light"] .arch-box.purple { background: rgba(124,58,237,0.06); border-color: rgba(124,58,237,0.25); }
+  [data-theme="light"] .arch-box.green { background: rgba(5,150,105,0.06); border-color: rgba(5,150,105,0.25); }
+  [data-theme="light"] .arch-box.cyan { background: rgba(8,145,178,0.06); border-color: rgba(8,145,178,0.25); }
+  [data-theme="light"] .arch-box.pink { background: rgba(219,39,119,0.06); border-color: rgba(219,39,119,0.25); }
+  [data-theme="light"] .arch-box.amber { background: rgba(199,125,8,0.06); border-color: rgba(199,125,8,0.25); }
+  [data-theme="light"] .flow-icon.orange { background: rgba(217,98,11,0.08); border-color: rgba(217,98,11,0.25); }
+  [data-theme="light"] .flow-icon.blue { background: rgba(37,99,235,0.08); border-color: rgba(37,99,235,0.25); }
+  [data-theme="light"] .flow-icon.purple { background: rgba(124,58,237,0.08); border-color: rgba(124,58,237,0.25); }
+  [data-theme="light"] .flow-icon.green { background: rgba(5,150,105,0.08); border-color: rgba(5,150,105,0.25); }
+  [data-theme="light"] .flow-icon.cyan { background: rgba(8,145,178,0.08); border-color: rgba(8,145,178,0.25); }
+  [data-theme="light"] .flow-icon.pink { background: rgba(219,39,119,0.08); border-color: rgba(219,39,119,0.25); }
+  [data-theme="light"] .flow-icon.amber { background: rgba(199,125,8,0.08); border-color: rgba(199,125,8,0.25); }
+  [data-theme="light"] .qa-badge {
+    background: rgba(124,58,237,0.08); border-color: rgba(124,58,237,0.2);
+  }
+  [data-theme="light"] .tag.orange { background: rgba(217,98,11,0.1); }
+  [data-theme="light"] .tag.blue { background: rgba(37,99,235,0.1); }
+  [data-theme="light"] .tag.purple { background: rgba(124,58,237,0.1); }
+  [data-theme="light"] .tag.green { background: rgba(5,150,105,0.1); }
+  [data-theme="light"] .card { box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  [data-theme="light"] .stat-box { box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  [data-theme="light"] .title-logo {
+    background: linear-gradient(135deg, rgba(217,98,11,0.1), rgba(124,58,237,0.1));
+    border-color: rgba(217,98,11,0.2);
+  }
+
+  /* ── Theme Toggle Button ── */
+  .theme-toggle {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--text-secondary); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease; font-size: 1.1rem;
+    margin-left: 0.75rem; flex-shrink: 0;
+  }
+  .theme-toggle:hover {
+    background: var(--bg-card-hover); color: var(--text-primary);
+    border-color: var(--accent-amber);
+  }
+  .theme-toggle .icon-sun,
+  .theme-toggle .icon-moon { transition: opacity 0.3s, transform 0.3s; }
+  .theme-toggle .icon-sun { display: none; }
+  [data-theme="light"] .theme-toggle .icon-sun { display: block; }
+  [data-theme="light"] .theme-toggle .icon-moon { display: none; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════ NAV ════════════════ -->
+<nav class="nav" id="mainNav">
+  <div class="nav-brand">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    Claude Code Demo
+  </div>
+  <div class="nav-links" id="navLinks">
+    <a href="#slide-0" class="active" data-slide="0">Intro</a>
+    <a href="#slide-1" data-slide="1">Overview</a>
+    <a href="#slide-2" data-slide="2">Coding</a>
+    <a href="#slide-3" data-slide="3">Git</a>
+    <a href="#slide-4" data-slide="4">Testing</a>
+    <a href="#slide-5" data-slide="5">CI/CD</a>
+    <a href="#slide-6" data-slide="6">Specs</a>
+    <a href="#slide-7" data-slide="7">Teams</a>
+    <a href="#slide-8" data-slide="8">Q: Specs</a>
+    <a href="#slide-9" data-slide="9">Q: Modules</a>
+    <a href="#slide-10" data-slide="10">Q: Git+CI</a>
+    <a href="#slide-11" data-slide="11">Q: Testing</a>
+    <a href="#slide-12" data-slide="12">Q: Maintenance</a>
+    <a href="#slide-13" data-slide="13">Wrap Up</a>
+  </div>
+  <div style="display:flex;align-items:center;">
+    <div class="slide-counter" id="slideCounter">1 / 14</div>
+    <button class="theme-toggle" id="themeToggle" title="Toggle light/dark mode" onclick="toggleTheme()">
+      <span class="icon-moon">&#x1f319;</span>
+      <span class="icon-sun">&#x2600;&#xfe0f;</span>
+    </button>
+  </div>
+</nav>
+<div class="progress-bar" id="progressBar" style="width: 0%"></div>
+
+<!-- ════════════════ SLIDES ════════════════ -->
+<div class="slides-container" id="slidesContainer">
+
+<!-- ──────── SLIDE 0: Title ──────── -->
+<section class="slide" id="slide-0">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="width:600px;height:600px;background:var(--accent-orange);top:-200px;right:-200px;"></div>
+  <div class="bg-glow" style="width:500px;height:500px;background:var(--accent-purple);bottom:-200px;left:-200px;"></div>
+  <div class="slide-inner title-slide">
+    <div class="title-logo">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="url(#grad1)" stroke-width="1.5">
+        <defs><linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#f97316"/><stop offset="100%" style="stop-color:#8b5cf6"/></linearGradient></defs>
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+      </svg>
+    </div>
+    <h1><span class="gradient-text">Claude Code</span></h1>
+    <p class="subtitle" style="text-align:center;margin:0 auto;">
+      AI-Powered Development &mdash; From Spec to Production<br>
+      <span style="color:var(--text-muted);font-size:1rem;">Powered by <strong>Opus 4.6</strong> &bull; Agentic Coding in Your Terminal</span>
+    </p>
+    <div class="title-meta">
+      <div class="title-meta-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        March 20, 2026
+      </div>
+      <div class="title-meta-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Engineering Team Demo
+      </div>
+      <div class="title-meta-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Interactive Walkthrough
+      </div>
+    </div>
+    <div style="margin-top:3rem;color:var(--text-muted);font-size:0.8rem;">
+      Use <span style="background:var(--bg-card);padding:0.2rem 0.5rem;border-radius:4px;font-family:'JetBrains Mono',monospace;">Arrow Keys</span> or <span style="background:var(--bg-card);padding:0.2rem 0.5rem;border-radius:4px;font-family:'JetBrains Mono',monospace;">Scroll</span> to navigate
+    </div>
+  </div>
+</section>
+
+<!-- ──────── SLIDE 1: What is Claude Code? ──────── -->
+<section class="slide" id="slide-1">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="width:400px;height:400px;background:var(--accent-blue);top:10%;right:5%;"></div>
+  <div class="slide-inner">
+    <span class="section-label orange">Overview</span>
+    <h2>What is <span class="gradient-text">Claude Code?</span></h2>
+    <p class="subtitle">An agentic coding tool that lives in your terminal. It understands your codebase, executes commands, edits files, and works alongside you like a senior pair programmer.</p>
+
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="stat-number gradient-text">1M</div>
+        <div class="stat-label">Token Context Window</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number gradient-blue">Opus 4.6</div>
+        <div class="stat-label">Latest Model</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number gradient-purple">CLI</div>
+        <div class="stat-label">Terminal-Native</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number gradient-green">IDE</div>
+        <div class="stat-label">VS Code &amp; JetBrains</div>
+      </div>
+    </div>
+
+    <div class="card-grid cols-3" style="margin-top:1.5rem;">
+      <div class="card orange">
+        <div class="card-icon orange">&#x1f9e0;</div>
+        <h3>Understands Context</h3>
+        <p>Reads your entire codebase, config files, dependencies, and CLAUDE.md project instructions.</p>
+      </div>
+      <div class="card blue">
+        <div class="card-icon blue">&#x2318;</div>
+        <h3>Executes Actions</h3>
+        <p>Runs shell commands, edits files, searches code, creates branches, commits &mdash; all from natural language.</p>
+      </div>
+      <div class="card purple">
+        <div class="card-icon purple">&#x1f504;</div>
+        <h3>Agentic Workflow</h3>
+        <p>Plans, implements, tests, and iterates autonomously. Asks for permission before risky operations.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────── SLIDE 2: Coding & Development ──────── -->
+<section class="slide" id="slide-2">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="width:400px;height:400px;background:var(--accent-green);bottom:10%;left:5%;"></div>
+  <div class="slide-inner">
+    <span class="section-label green">Core Capability</span>
+    <h2>Coding &amp; <span class="gradient-green">Development</span></h2>
+
+    <div class="two-col">
+      <div>
+        <div class="card-grid" style="grid-template-columns:1fr;gap:1rem;margin-top:0;">
+          <div class="card green">
+            <h3>&#x1f4dd; Code Generation</h3>
+            <ul>
+              <li>Full feature implementation from natural language</li>
+              <li>Multi-file scaffolding (components, services, tests)</li>
+              <li>Any language / framework / stack</li>
+            </ul>
+          </div>
+          <div class="card cyan">
+            <h3>&#x1f50d; Code Understanding</h3>
+            <ul>
+              <li>Explain complex codebases in plain English</li>
+              <li>Trace execution paths across files</li>
+              <li>Identify patterns, anti-patterns, security issues</li>
+            </ul>
+          </div>
+          <div class="card blue">
+            <h3>&#x1f527; Refactoring &amp; Bug Fixes</h3>
+            <ul>
+              <li>Root-cause analysis with full context</li>
+              <li>Safe refactoring across the codebase</li>
+              <li>Dependency upgrades &amp; migration assistance</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="terminal">
+          <div class="terminal-header">
+            <div class="terminal-dot red"></div>
+            <div class="terminal-dot yellow"></div>
+            <div class="terminal-dot green"></div>
+            <div class="terminal-title">claude &mdash; terminal</div>
+          </div>
+          <div class="terminal-body">
+            <div class="terminal-line"><span class="terminal-prompt">$</span><span class="terminal-cmd">claude</span></div>
+            <div class="terminal-output"><span class="terminal-green">Claude Code</span> v1.0 (Opus 4.6)</div>
+            <br>
+            <div class="terminal-line"><span class="terminal-prompt">&gt;</span><span class="terminal-cmd">Add a REST API endpoint for user</span></div>
+            <div class="terminal-line"><span class="terminal-prompt">&nbsp;</span><span class="terminal-cmd">preferences with CRUD operations</span></div>
+            <br>
+            <div class="terminal-comment"># Claude analyzes your codebase...</div>
+            <div class="terminal-output"><span class="terminal-highlight">Reading</span> src/routes/index.ts</div>
+            <div class="terminal-output"><span class="terminal-highlight">Reading</span> src/models/User.ts</div>
+            <div class="terminal-output"><span class="terminal-highlight">Reading</span> src/middleware/auth.ts</div>
+            <br>
+            <div class="terminal-comment"># Creates files matching your patterns</div>
+            <div class="terminal-output"><span class="terminal-green">Created</span> src/models/Preference.ts</div>
+            <div class="terminal-output"><span class="terminal-green">Created</span> src/routes/preferences.ts</div>
+            <div class="terminal-output"><span class="terminal-green">Created</span> src/tests/preferences.test.ts</div>
+            <div class="terminal-output"><span class="terminal-blue">Updated</span> src/routes/index.ts</div>
+            <br>
+            <div class="terminal-output"><span class="terminal-cyan">&#10003;</span> All files follow existing conventions</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────── SLIDE 3: Git & GitHub ──────── -->
+<section class="slide" id="slide-3">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="width:400px;height:400px;background:var(--accent-orange);top:15%;left:10%;"></div>
+  <div class="slide-inner">
+    <span class="section-label orange">Version Control</span>
+    <h2>Git &amp; <span class="gradient-text">GitHub Integration</span></h2>
+    <p class="subtitle">Claude Code natively understands Git. It reads history, creates branches, commits with meaningful messages, opens PRs, and resolves merge conflicts.</p>
+
+    <div class="card-grid cols-4" style="margin-top:1.5rem;">
+      <div class="card orange">
+        <div class="card-icon orange">&#x1f4cb;</div>
+        <h3>Smart Commits</h3>
+        <p>Analyzes diffs and writes contextual commit messages. Uses conventional commit style.</p>
+      </div>
+      <div class="card amber">
+        <div class="card-icon amber">&#x1f500;</div>
+        <h3>Branch Management</h3>
+        <p>Creates feature branches, handles rebasing, resolves merge conflicts intelligently.</p>
+      </div>
+      <div class="card blue">
+        <div class="card-icon blue">&#x1f4e8;</div>
+        <h3>PR Automation</h3>
+        <p>Opens PRs with rich descriptions, summaries, and test plans via <code>gh</code> CLI integration.</p>
+      </div>
+      <div class="card purple">
+        <div class="card-icon purple">&#x1f50d;</div>
+        <h3>Code Review</h3>
+        <p>Reviews PRs, leaves comments, suggests fixes. Run as GitHub Action on every PR.</p>
+      </div>
+    </div>
+
+    <div class="terminal" style="margin-top:1.5rem;">
+      <div class="terminal-header">
+        <div class="terminal-dot red"></div><div class="terminal-dot yellow"></div><div class="terminal-dot green"></div>
+        <div class="terminal-title">git workflow demo</div>
+      </div>
+      <div class="terminal-body">
+        <div class="terminal-line"><span class="terminal-prompt">&gt;</span><span class="terminal-cmd">/commit</span></div>
+        <div class="terminal-output"><span class="terminal-highlight">Analyzing</span> staged changes (3 files)...</div>
+        <div class="terminal-output"><span class="terminal-green">Committed:</span> feat(preferences): add CRUD API for user preferences</div>
+        <br>
+        <div class="terminal-line"><span class="terminal-prompt">&gt;</span><span class="terminal-cmd">Create a PR for this feature branch</span></div>
+        <div class="terminal-output"><span class="terminal-blue">Pushing</span> to origin/feat/user-preferences...</div>
+        <div class="terminal-output"><span class="terminal-green">PR #42 created:</span> https://github.com/org/repo/pull/42</div>
+        <div class="terminal-output">  Title: Add user preferences API with full CRUD</div>
+        <div class="terminal-output">  Includes: summary, test plan, linked issues</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────── SLIDE 4: Testing ──────── -->
+<section class="slide" id="slide-4">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="width:400px;height:400px;background:var(--accent-cyan);bottom:15%;right:10%;"></div>
+  <div class="slide-inner">
+    <span class="section-label cyan">Quality Assurance</span>
+    <h2>Testing &amp; <span class="gradient-blue">Quality</span></h2>
+    <p class="subtitle">Claude Code generates, runs, and fixes tests &mdash; from unit to integration to performance. It understands your test framework and patterns.</p>
+
+    <div class="card-grid cols-2" style="margin-top:1.5rem;">
+      <div class="card cyan">
+        <div class="card-icon cyan">&#x1f9ea;</div>
+        <h3>Unit Testing</h3>
+        <ul>
+          <li>Generates tests matching your test framework (Jest, Pytest, Go test, etc.)</li>
+          <li>Follows existing test patterns in your codebase</li>
+          <li>Covers edge cases, error paths, boundary conditions</li>
+          <li>Runs tests and iterates until they pass</li>
+        </ul>
+      </div>
+      <div class="card blue">
+        <div class="card-icon blue">&#x1f517;</div>
+        <h3>Integration Testing</h3>
+        <ul>
+          <li>API endpoint testing with request/response validation</li>
+          <li>Database integration tests with fixtures</li>
+          <li>Service-to-service contract testing</li>
+          <li>Test data generation and management</li>
+        </ul>
+      </div>
+      <div class="card green">
+        <div class="card-icon green">&#x2705;</div>
+        <h3>Functional Testing</h3>
+        <ul>
+          <li>End-to-end workflow validation</li>
+          <li>User journey and scenario testing</li>
+          <li>Cross-module functional verification</li>
+          <li>Regression test suite generation</li>
+        </ul>
+      </div>
+      <div class="card purple">
+        <div class="card-icon purple">&#x26a1;</div>
+        <h3>Performance Testing</h3>
+        <ul>
+          <li>Load test scripts (k6, Locust, Artillery)</li>
+          <li>Benchmark generation for critical paths</li>
+          <li>Memory leak detection patterns</li>
+          <li>Profiling guidance and optimization</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────── SLIDE 5: CI/CD ──────── -->
+<section class="slide" id="slide-5">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="width:400px;height:400px;background:var(--accent-purple);top:20%;right:15%;"></div>
+  <div class="slide-inner">
+    <span class="section-label purple">Automation</span>
+    <h2>CI/CD <span class="gradient-purple">Workflow</span></h2>
+
+    <div class="flow-horizontal">
+      <div class="flow-step">
+        <div class="flow-icon orange">&#x1f4dd;</div>
+        <div class="flow-step-label">Code</div>
+        <div class="flow-step-desc">Claude Code writes & edits</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="flow-icon amber">&#x1f4cb;</div>
+        <div class="flow-step-label">Commit</div>
+        <div class="flow-step-desc">/commit with smart messages</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="flow-icon blue">&#x1f680;</div>
+        <div class="flow-step-label">Push + PR</div>
+        <div class="flow-step-desc">Branch, push, open PR</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="flow-icon purple">&#x1f916;</div>
+        <div class="flow-step-label">CI Review</div>
+        <div class="flow-step-desc">Claude as GitHub Action</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="flow-icon green">&#x2705;</div>
+        <div class="flow-step-label">Test</div>
+        <div class="flow-step-desc">Automated test suite</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="flow-icon cyan">&#x1f4e6;</div>
+        <div class="flow-step-label">Deploy</div>
+        <div class="flow-step-desc">CD pipeline triggers</div>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-top:1rem;">
+      <div class="card purple">
+        <h3>&#x1f916; Claude as GitHub Action</h3>
+        <p style="margin-bottom:0.75rem;">Run Claude Code in CI to automatically review PRs, fix linting issues, and validate changes.</p>
+        <div class="terminal" style="margin-top:0.5rem;">
+          <div class="terminal-body" style="padding:0.75rem;">
+            <div class="terminal-comment"># .github/workflows/claude.yml</div>
+            <div><span class="terminal-purple">on</span>: [pull_request]</div>
+            <div><span class="terminal-purple">jobs</span>:</div>
+            <div>&nbsp;&nbsp;<span class="terminal-blue">claude-review</span>:</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="terminal-purple">uses</span>: anthropics/claude-code-action</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="terminal-purple">with</span>:</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="terminal-green">review</span>: true</div>
+          </div>
+        </div>
+      </div>
+      <div class="card blue">
+        <h3>&#x1f527; Pipeline Generation</h3>
+        <p>Claude Code can generate and maintain your CI/CD pipelines:</p>
+        <ul>
+          <li>GitHub Actions workflows</li>
+          <li>GitLab CI / Jenkins / CircleCI</li>
+          <li>Docker build &amp; deploy configs</li>
+          <li>Infrastructure as Code (Terraform, CDK)</li>
+          <li>Kubernetes manifests &amp; Helm charts</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────── SLIDE 6: Spec Development ──────── -->
+<section class="slide" id="slide-6">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="width:400px;height:400px;background:var(--accent-pink);top:15%;left:10%;"></div>
+  <div class="slide-inner">
+    <span class="section-label pink">Planning</span>
+    <h2>Spec &amp; <span class="gradient-purple">Design Development</span></h2>
+    <p class="subtitle">From requirements gathering to architectural design, Claude Code helps formalize and implement specifications.</p>
+
+    <div class="two-col">
+      <div>
+        <div class="card pink" style="margin-bottom:1rem;">
+          <h3>&#x1f4d0; CLAUDE.md &mdash; Project Intelligence</h3>
+          <p style="margin-bottom:0.75rem;">The <code>CLAUDE.md</code> file at your project root is Claude's persistent memory. Define:</p>
+          <ul>
+            <li>Architecture &amp; design decisions</li>
+            <li>Technology stack constraints</li>
+            <li>Coding conventions &amp; patterns</li>
+            <li>Build/deploy instructions</li>
+            <li>Team-specific workflows</li>
+          </ul>
+        </div>
+        <div class="card purple">
+          <h3>&#x1f4cb; Spec-Driven Development</h3>
+          <ul>
+            <li>Generate PRDs from conversations</li>
+            <li>Create technical design docs</li>
+            <li>Define API contracts (OpenAPI/Swagger)</li>
+            <li>Database schema design</li>
+            <li>Architecture Decision Records (ADRs)</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="terminal">
+          <div class="terminal-header">
+            <div class="terminal-dot red"></div><div class="terminal-dot yellow"></div><div class="terminal-dot green"></div>
+            <div class="terminal-title">CLAUDE.md example</div>
+          </div>
+          <div class="terminal-body">
+            <div><span class="terminal-purple"># Project: User Service</span></div>
+            <br>
+            <div><span class="terminal-blue">## Tech Stack</span></div>
+            <div>- Backend: Node.js + TypeScript</div>
+            <div>- Database: PostgreSQL + Prisma ORM</div>
+            <div>- Testing: Jest + Supertest</div>
+            <div>- Deployment: Docker + AWS ECS</div>
+            <br>
+            <div><span class="terminal-blue">## Conventions</span></div>
+            <div>- Use barrel exports (index.ts)</div>
+            <div>- Error handling via custom AppError</div>
+            <div>- All endpoints need auth middleware</div>
+            <br>
+            <div><span class="terminal-blue">## Architecture</span></div>
+            <div>- Clean architecture (routes → </div>
+            <div>&nbsp;&nbsp;controllers → services → repos)</div>
+            <div>- Events via internal event bus</div>
+            <br>
+            <div><span class="terminal-blue">## Never</span></div>
+            <div>- Skip input validation</div>
+            <div>- Use raw SQL (use Prisma)</div>
+            <div>- Commit .env files</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────── SLIDE 7: Team Development ──────── -->
+<section class="slide" id="slide-7">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="width:400px;height:400px;background:var(--accent-amber);bottom:15%;left:15%;"></div>
+  <div class="slide-inner">
+    <span class="section-label amber">Collaboration</span>
+    <h2>Team <span class="gradient-text">Development</span></h2>
+    <p class="subtitle">Claude Code amplifies every developer on the team &mdash; each member gets a senior pair programmer that knows the entire codebase.</p>
+
+    <div class="arch-diagram">
+      <div class="arch-layer" style="justify-content:center;">
+        <div class="arch-box purple" style="min-width:250px;">&#x1f4d0; Shared CLAUDE.md &amp; Project Instructions</div>
+      </div>
+      <div class="arch-connector">&#x2193; &#x2193; &#x2193;</div>
+      <div class="arch-layer">
+        <div class="arch-box orange">&#x1f468;&#x200d;&#x1f4bb; Dev A<br><small>Auth Module</small></div>
+        <div class="arch-box blue">&#x1f469;&#x200d;&#x1f4bb; Dev B<br><small>API Gateway</small></div>
+        <div class="arch-box green">&#x1f9d1;&#x200d;&#x1f4bb; Dev C<br><small>Data Pipeline</small></div>
+        <div class="arch-box pink">&#x1f469;&#x200d;&#x1f4bb; Dev D<br><small>Frontend</small></div>
+      </div>
+      <div class="arch-connector">&#x2193; &#x2193; &#x2193;</div>
+      <div class="arch-layer">
+        <div class="arch-box cyan" style="min-width:200px;">&#x1f500; Git + Feature Branches</div>
+        <div class="arch-box amber" style="min-width:200px;">&#x1f916; Claude CI Review</div>
+      </div>
+      <div class="arch-connector">&#x2193;</div>
+      <div class="arch-layer" style="justify-content:center;">
+        <div class="arch-box green" style="min-width:250px;">&#x2705; Main Branch &mdash; Always Shippable</div>
+      </div>
+    </div>
+
+    <div class="card-grid cols-3" style="margin-top:1.5rem;">
+      <div class="card orange">
+        <h3>Shared Context</h3>
+        <p>CLAUDE.md + .claude/ files ensure every developer's Claude instance follows the same architecture, patterns, and rules.</p>
+      </div>
+      <div class="card blue">
+        <h3>Worktrees</h3>
+        <p>Claude Code supports git worktrees &mdash; run multiple agents on different branches in parallel without conflicts.</p>
+      </div>
+      <div class="card green">
+        <h3>PR-Based Integration</h3>
+        <p>Standard Git workflow. Each dev works on feature branches; Claude helps with rebasing, conflicts, and reviews.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- ══════ TEAM Q&A SLIDES START HERE ══════ -->
+<!-- ══════════════════════════════════════════ -->
+
+<!-- ──────── SLIDE 8: Q&A - Specs & Tech Stack ──────── -->
+<section class="slide" id="slide-8">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="width:400px;height:400px;background:var(--accent-purple);top:10%;right:10%;"></div>
+  <div class="slide-inner">
+    <div class="qa-badge">&#x2753; Team Question</div>
+    <h2>Using Claude Projects for <span class="gradient-purple">Specs &amp; Tech Stack</span></h2>
+    <p class="subtitle" style="font-style:italic;border-left:3px solid var(--accent-purple);padding-left:1rem;">
+      "Will we use Claude Projects to create Requirement and Design Specs and dictate a specific Technology stack in Claude Code?"
+    </p>
+
+    <div class="two-col" style="margin-top:2rem;">
+      <div>
+        <h3 style="color:var(--accent-purple);margin-bottom:1rem;">&#x2705; Yes &mdash; Here's How</h3>
+
+        <div class="expandable">
+          <div class="expandable-header" onclick="toggleExpand(this)">
+            <span class="chevron">&#x25B6;</span>
+            <div class="card-icon purple" style="width:32px;height:32px;font-size:1rem;margin:0;flex-shrink:0;">1</div>
+            <h3>Claude Projects &rarr; Spec Authoring</h3>
+          </div>
+          <div class="expandable-content">
+            <p>Use <strong>Claude Projects</strong> (claude.ai web) for collaborative spec writing. Upload existing docs, reference materials, and iterate on requirements with the team. Export finalized specs as markdown files into your repo.</p>
+          </div>
+        </div>
+
+        <div class="expandable">
+          <div class="expandable-header" onclick="toggleExpand(this)">
+            <span class="chevron">&#x25B6;</span>
+            <div class="card-icon purple" style="width:32px;height:32px;font-size:1rem;margin:0;flex-shrink:0;">2</div>
+            <h3>CLAUDE.md &rarr; Tech Stack Enforcement</h3>
+          </div>
+          <div class="expandable-content">
+            <p>Define your tech stack in <code>CLAUDE.md</code> at the project root. Claude Code reads this file automatically and enforces these constraints in every interaction:</p>
+            <ul>
+              <li>Language, framework, and library versions</li>
+              <li>Architecture patterns (clean arch, hexagonal, etc.)</li>
+              <li>Database choices, ORM preferences</li>
+              <li>"Never use X" / "Always use Y" rules</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="expandable">
+          <div class="expandable-header" onclick="toggleExpand(this)">
+            <span class="chevron">&#x25B6;</span>
+            <div class="card-icon purple" style="width:32px;height:32px;font-size:1rem;margin:0;flex-shrink:0;">3</div>
+            <h3>Spec &rarr; Code Pipeline</h3>
+          </div>
+          <div class="expandable-content">
+            <p>With specs in the repo and rules in CLAUDE.md, you can give Claude Code high-level instructions like:</p>
+            <ul>
+              <li>"Implement the auth module per docs/auth-spec.md"</li>
+              <li>"Create the database schema from docs/data-model.md"</li>
+              <li>"Build the API endpoints listed in docs/api-contract.yaml"</li>
+            </ul>
+            <p>Claude Code will read the spec and generate code that follows your stack constraints.</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card purple" style="margin-bottom:1rem;">
+          <h3>&#x1f504; The Flow</h3>
+          <div style="display:flex;flex-direction:column;gap:0.75rem;margin-top:1rem;">
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+              <span class="tag purple">1</span>
+              <span style="font-size:0.88rem;color:var(--text-secondary);">Draft specs in <strong>Claude Projects</strong> (web UI)</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+              <span class="tag purple">2</span>
+              <span style="font-size:0.88rem;color:var(--text-secondary);">Export as markdown &rarr; <code>docs/</code> folder in repo</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+              <span class="tag purple">3</span>
+              <span style="font-size:0.88rem;color:var(--text-secondary);">Define stack rules in <code>CLAUDE.md</code></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+              <span class="tag purple">4</span>
+              <span style="font-size:0.88rem;color:var(--text-secondary);">Claude Code reads both &amp; generates compliant code</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+              <span class="tag purple">5</span>
+              <span style="font-size:0.88rem;color:var(--text-secondary);">Iterate: update specs &rarr; Claude Code adapts</span>
+            </div>
+          </div>
+        </div>
+        <div class="note">
+          <strong>Key Insight:</strong> Claude Projects is great for collaborative authoring; Claude Code is great for turning those specs into working code. Use both together.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────── SLIDE 9: Q&A - Team Modules ──────── -->
+<section class="slide" id="slide-9">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="width:400px;height:400px;background:var(--accent-blue);bottom:10%;left:10%;"></div>
+  <div class="slide-inner">
+    <div class="qa-badge">&#x2753; Team Question</div>
+    <h2>Multi-Module <span class="gradient-blue">Team Development</span></h2>
+    <p class="subtitle" style="font-style:italic;border-left:3px solid var(--accent-blue);padding-left:1rem;">
+      "How will different team members develop different modules but still connect/use functionalities developed by others?"
+    </p>
+
+    <div class="two-col" style="margin-top:2rem;">
+      <div>
+        <div class="card blue" style="margin-bottom:1rem;">
+          <h3>&#x1f3d7;&#xfe0f; Shared Codebase, Individual Branches</h3>
+          <ul>
+            <li><strong>Monorepo or modular repo</strong> &mdash; everyone works in the same Git repo</li>
+            <li>Each developer has their own <strong>feature branch</strong></li>
+            <li>Claude Code reads the <strong>entire codebase</strong> including other members' modules</li>
+            <li>When Dev B needs to call Dev A's auth service, Claude already knows the interface</li>
+          </ul>
+        </div>
+        <div class="card green" style="margin-bottom:1rem;">
+          <h3>&#x1f517; Interface Contracts</h3>
+          <ul>
+            <li>Define shared interfaces/types in a common directory</li>
+            <li>API contracts via OpenAPI specs in the repo</li>
+            <li>Claude Code enforces type safety across module boundaries</li>
+            <li>Catches integration issues <strong>before</strong> they reach CI</li>
+          </ul>
+        </div>
+        <div class="card cyan">
+          <h3>&#x1f504; Pull &amp; Rebase Workflow</h3>
+          <ul>
+            <li>Regular pulls from main keep modules in sync</li>
+            <li>Claude Code helps resolve merge conflicts intelligently</li>
+            <li>Ask: "What changed in the auth module since I last pulled?"</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:1.75rem;">
+          <h3 style="margin-bottom:1.25rem;">&#x1f4a1; How Claude Connects Modules</h3>
+          <div class="arch-diagram" style="margin-top:0;">
+            <div class="arch-layer">
+              <div class="arch-box orange" style="min-width:100px;">Auth<br>Module</div>
+              <div class="arch-box blue" style="min-width:100px;">API<br>Gateway</div>
+              <div class="arch-box green" style="min-width:100px;">Data<br>Pipeline</div>
+            </div>
+            <div class="arch-connector">&#x2191; &#x2193;</div>
+            <div class="arch-layer" style="justify-content:center;">
+              <div class="arch-box purple" style="min-width:260px;">&#x1f4d0; Shared Types &amp; Interfaces<br><small>src/shared/types.ts</small></div>
+            </div>
+            <div class="arch-connector">&#x2191;</div>
+            <div class="arch-layer" style="justify-content:center;">
+              <div class="arch-box amber" style="min-width:260px;">&#x1f916; Claude Code reads everything<br><small>Understands cross-module deps</small></div>
+            </div>
+          </div>
+          <div class="note" style="margin-top:1rem;">
+            <strong>Example:</strong> "Hey Claude, I need to call the auth service to validate tokens in my API gateway module" &mdash; Claude will import the correct types and functions from the auth module automatically.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────── SLIDE 10: Q&A - Git + CI/CD ──────── -->
+<section class="slide" id="slide-10">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="width:400px;height:400px;background:var(--accent-green);top:10%;left:10%;"></div>
+  <div class="slide-inner">
+    <div class="qa-badge">&#x2753; Team Question</div>
+    <h2>Version Control, Build &amp; <span class="gradient-green">Deployment</span></h2>
+    <p class="subtitle" style="font-style:italic;border-left:3px solid var(--accent-green);padding-left:1rem;">
+      "What would be our code version, build, deployment mechanism? Would we integrate Git with Claude Code and then Git to some CI/CD?"
+    </p>
+
+    <div class="divider" style="background:linear-gradient(90deg, var(--accent-green), var(--accent-cyan));"></div>
+
+    <h3 style="margin-bottom:1.5rem;">&#x2705; Yes &mdash; Claude Code + Git + CI/CD is the recommended stack</h3>
+
+    <div class="flow-horizontal" style="margin-bottom:1.5rem;">
+      <div class="flow-step">
+        <div class="flow-icon orange">&#x1f4bb;</div>
+        <div class="flow-step-label">Developer</div>
+        <div class="flow-step-desc">Uses Claude Code locally</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="flow-icon amber">&#x1f4be;</div>
+        <div class="flow-step-label">Git</div>
+        <div class="flow-step-desc">Commit, push, branch</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="flow-icon blue">&#x1f4e6;</div>
+        <div class="flow-step-label">GitHub/GitLab</div>
+        <div class="flow-step-desc">PR, review, merge</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="flow-icon purple">&#x1f916;</div>
+        <div class="flow-step-label">Claude CI</div>
+        <div class="flow-step-desc">Auto-review PRs</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="flow-icon green">&#x2699;</div>
+        <div class="flow-step-label">CI Pipeline</div>
+        <div class="flow-step-desc">Build, test, lint</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="flow-icon cyan">&#x1f680;</div>
+        <div class="flow-step-label">Deploy</div>
+        <div class="flow-step-desc">Staging &rarr; Prod</div>
+      </div>
+    </div>
+
+    <div class="card-grid cols-3">
+      <div class="card green">
+        <h3>&#x1f4be; Version Control</h3>
+        <ul>
+          <li>Git is fully integrated into Claude Code</li>
+          <li>Branching strategy: GitFlow or trunk-based</li>
+          <li>Semantic versioning via tags</li>
+          <li>Claude writes meaningful commit messages</li>
+        </ul>
+      </div>
+      <div class="card blue">
+        <h3>&#x1f3d7;&#xfe0f; Build</h3>
+        <ul>
+          <li>Claude generates Dockerfiles, build scripts</li>
+          <li>Multi-stage builds for optimization</li>
+          <li>Dependency management (lockfiles)</li>
+          <li>Build pipeline YAML generation</li>
+        </ul>
+      </div>
+      <div class="card purple">
+        <h3>&#x1f680; Deployment</h3>
+        <ul>
+          <li>Claude generates IaC (Terraform, CDK, Pulumi)</li>
+          <li>K8s manifests and Helm charts</li>
+          <li>Environment-specific configs</li>
+          <li>Rollback strategies and health checks</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────── SLIDE 11: Q&A - Testing Strategy ──────── -->
+<section class="slide" id="slide-11">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="width:400px;height:400px;background:var(--accent-cyan);bottom:10%;right:10%;"></div>
+  <div class="slide-inner">
+    <div class="qa-badge">&#x2753; Team Question</div>
+    <h2>Complete Testing <span class="gradient-blue">Strategy</span></h2>
+    <p class="subtitle" style="font-style:italic;border-left:3px solid var(--accent-cyan);padding-left:1rem;">
+      "Would we use Claude Code to deploy into a sandbox and do Unit Testing? Would we develop Integration, Functional, and Performance Test Cases, Test Code, and Test Data too?"
+    </p>
+
+    <div class="divider" style="background:linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));"></div>
+
+    <h3 style="margin-bottom:0.5rem;">&#x2705; Yes to all of the above</h3>
+    <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1.5rem;">Claude Code handles the full testing pyramid. Here's the breakdown:</p>
+
+    <div class="card-grid cols-2">
+      <div class="card cyan">
+        <h3>&#x1f9ea; Unit Testing &amp; Sandbox</h3>
+        <p style="margin-bottom:0.75rem;">Claude Code runs in your local environment &mdash; it executes tests directly:</p>
+        <ul>
+          <li>Write test &rarr; Run test &rarr; Fix failures &rarr; <strong>repeat until green</strong></li>
+          <li>Uses your project's test runner (Jest, Pytest, Go test, etc.)</li>
+          <li>Generates mocks, stubs, and fixtures</li>
+          <li>Achieves high coverage by targeting edge cases</li>
+        </ul>
+        <div class="terminal" style="margin-top:0.75rem;">
+          <div class="terminal-body" style="padding:0.75rem;font-size:0.75rem;">
+            <div class="terminal-line"><span class="terminal-prompt">&gt;</span><span class="terminal-cmd">Write tests for the auth service</span></div>
+            <div class="terminal-output"><span class="terminal-green">Created</span> tests/auth.test.ts (12 tests)</div>
+            <div class="terminal-output"><span class="terminal-highlight">Running</span> npm test...</div>
+            <div class="terminal-output"><span class="terminal-green">&#10003;</span> 12/12 passed | Coverage: 94%</div>
+          </div>
+        </div>
+      </div>
+      <div class="card blue">
+        <h3>&#x1f517; Integration &amp; Functional Tests</h3>
+        <p style="margin-bottom:0.75rem;">Claude Code creates comprehensive integration tests:</p>
+        <ul>
+          <li>API endpoint tests with real HTTP requests</li>
+          <li>Database integration with test fixtures &amp; seeds</li>
+          <li>Service-to-service interaction tests</li>
+          <li>End-to-end user workflow validation</li>
+          <li>Cross-module functional verification</li>
+        </ul>
+      </div>
+      <div class="card purple">
+        <h3>&#x26a1; Performance Test Code &amp; Data</h3>
+        <ul>
+          <li>Generate load test scripts (k6, Locust, Artillery)</li>
+          <li>Create realistic test data generators</li>
+          <li>Define performance benchmarks and thresholds</li>
+          <li>Stress test critical paths and bottlenecks</li>
+          <li>Memory leak detection scripts</li>
+        </ul>
+      </div>
+      <div class="card green">
+        <h3>&#x1f4ca; Test Data Management</h3>
+        <ul>
+          <li>Generate realistic test fixtures from schema</li>
+          <li>Create seed scripts for dev/staging environments</li>
+          <li>Data factories with Faker or custom generators</li>
+          <li>Edge case datasets (empty, null, Unicode, overflow)</li>
+          <li>Anonymized production-like data templates</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────── SLIDE 12: Q&A - Long-term Maintenance ──────── -->
+<section class="slide" id="slide-12">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="width:400px;height:400px;background:var(--accent-red);top:10%;right:10%;"></div>
+  <div class="bg-glow" style="width:300px;height:300px;background:var(--accent-amber);bottom:15%;left:10%;"></div>
+  <div class="slide-inner">
+    <div class="qa-badge">&#x2753; Team Question &mdash; Most Important</div>
+    <h2>Long-Term <span class="gradient-text">Maintenance &amp; Evolution</span></h2>
+    <p class="subtitle" style="font-style:italic;border-left:3px solid var(--accent-red);padding-left:1rem;">
+      "Having the first version developed with Claude is fine. It's more important to understand how we use Claude to keep adding/changing functionalities, fix bugs etc. after one or two years of the first release."
+    </p>
+
+    <div class="divider" style="background:linear-gradient(90deg, var(--accent-red), var(--accent-amber));"></div>
+
+    <div class="two-col">
+      <div>
+        <h3 style="margin-bottom:1.5rem;">&#x1f3af; This is where Claude Code truly shines</h3>
+
+        <div class="timeline">
+          <div class="timeline-item">
+            <h3>&#x1f41b; Bug Fixes &mdash; Deep Root Cause Analysis</h3>
+            <p>Describe the bug in plain English. Claude reads your <strong>entire codebase</strong> (up to 1M tokens of context), traces execution paths, identifies the root cause, explains it, and proposes a targeted fix &mdash; even in code written years ago by someone else.</p>
+          </div>
+          <div class="timeline-item">
+            <h3>&#x2728; Feature Additions &mdash; Context-Aware</h3>
+            <p>Claude Code reads existing patterns, conventions, and architecture. New features are built <strong>consistently</strong> with the rest of the codebase &mdash; not in a different style every time a new dev touches it.</p>
+          </div>
+          <div class="timeline-item">
+            <h3>&#x1f504; Refactoring &mdash; Safe, Cross-Codebase</h3>
+            <p>Need to rename a service, change a data model, or swap out a library? Claude traces all usages, updates every reference, and runs tests to verify nothing breaks.</p>
+          </div>
+          <div class="timeline-item">
+            <h3>&#x1f4e6; Dependency Upgrades</h3>
+            <p>Major version upgrades, security patches, breaking API changes &mdash; Claude reads migration guides, identifies breaking changes in your code, and applies the fix across the codebase.</p>
+          </div>
+          <div class="timeline-item">
+            <h3>&#x1f9d1;&#x200d;&#x1f3eb; Onboarding New Team Members</h3>
+            <p>New developers ask Claude: "How does the payment flow work?" and get an accurate, up-to-date explanation derived from the <strong>actual code</strong>, not outdated docs.</p>
+          </div>
+          <div class="timeline-item">
+            <h3>&#x1f4d6; Living Documentation</h3>
+            <p>CLAUDE.md and project docs evolve with the code. Claude helps maintain ADRs, API docs, and changelogs as the project grows.</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card red" style="margin-bottom:1rem;">
+          <h3>&#x1f511; Why It Works for Maintenance</h3>
+          <div class="kv-list">
+            <div class="kv-item">
+              <div class="kv-key" style="color:var(--accent-red);">No Knowledge Loss</div>
+              <div class="kv-val">Original dev left? Claude reads the code. No tribal knowledge required.</div>
+            </div>
+            <div class="kv-item">
+              <div class="kv-key" style="color:var(--accent-amber);">Always Current</div>
+              <div class="kv-val">Claude reads the codebase as it is <em>now</em>, not as it was documented months ago.</div>
+            </div>
+            <div class="kv-item">
+              <div class="kv-key" style="color:var(--accent-orange);">1M Token Context</div>
+              <div class="kv-val">Enough to hold large codebases in context. Cross-file reasoning that humans miss.</div>
+            </div>
+            <div class="kv-item">
+              <div class="kv-key" style="color:var(--accent-green);">Consistent Patterns</div>
+              <div class="kv-val">Enforces conventions in CLAUDE.md, preventing style drift over years.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card amber">
+          <h3>&#x1f4ac; Day-2 Operations Examples</h3>
+          <div class="terminal" style="margin-top:0.75rem;">
+            <div class="terminal-body" style="padding:0.75rem;font-size:0.75rem;">
+              <div class="terminal-comment"># Bug fix after 2 years</div>
+              <div class="terminal-line"><span class="terminal-prompt">&gt;</span><span class="terminal-cmd">Users report 500 errors when</span></div>
+              <div class="terminal-line"><span class="terminal-prompt">&nbsp;</span><span class="terminal-cmd">uploading files over 10MB.</span></div>
+              <div class="terminal-line"><span class="terminal-prompt">&nbsp;</span><span class="terminal-cmd">Investigate and fix.</span></div>
+              <br>
+              <div class="terminal-comment"># Feature addition</div>
+              <div class="terminal-line"><span class="terminal-prompt">&gt;</span><span class="terminal-cmd">Add export-to-CSV for the</span></div>
+              <div class="terminal-line"><span class="terminal-prompt">&nbsp;</span><span class="terminal-cmd">reports dashboard, following</span></div>
+              <div class="terminal-line"><span class="terminal-prompt">&nbsp;</span><span class="terminal-cmd">existing export patterns</span></div>
+              <br>
+              <div class="terminal-comment"># Major refactor</div>
+              <div class="terminal-line"><span class="terminal-prompt">&gt;</span><span class="terminal-cmd">Migrate from Express to Fastify</span></div>
+              <div class="terminal-line"><span class="terminal-prompt">&nbsp;</span><span class="terminal-cmd">while keeping all existing tests</span></div>
+              <div class="terminal-line"><span class="terminal-prompt">&nbsp;</span><span class="terminal-cmd">passing</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────── SLIDE 13: Wrap Up ──────── -->
+<section class="slide" id="slide-13">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="width:600px;height:600px;background:var(--accent-orange);top:-150px;left:-150px;"></div>
+  <div class="bg-glow" style="width:500px;height:500px;background:var(--accent-purple);bottom:-150px;right:-150px;"></div>
+  <div class="slide-inner title-slide">
+    <span class="section-label orange" style="margin-bottom:2rem;">Summary</span>
+    <h1 style="font-size:3rem;">Claude Code: <span class="gradient-text">Your AI Dev Team</span></h1>
+    <p class="subtitle" style="text-align:center;margin:0 auto 2rem;">
+      From spec to production to year-3 maintenance &mdash;<br>an AI pair programmer that knows your entire codebase.
+    </p>
+
+    <div class="card-grid cols-4" style="max-width:1000px;">
+      <div class="card orange" style="text-align:center;">
+        <div style="font-size:2rem;margin-bottom:0.5rem;">&#x1f4dd;</div>
+        <h3 style="font-size:0.9rem;">Spec to Code</h3>
+        <p style="font-size:0.8rem;">Projects + CLAUDE.md</p>
+      </div>
+      <div class="card blue" style="text-align:center;">
+        <div style="font-size:2rem;margin-bottom:0.5rem;">&#x1f46b;</div>
+        <h3 style="font-size:0.9rem;">Team Workflow</h3>
+        <p style="font-size:0.8rem;">Git + branches + PRs</p>
+      </div>
+      <div class="card purple" style="text-align:center;">
+        <div style="font-size:2rem;margin-bottom:0.5rem;">&#x1f916;</div>
+        <h3 style="font-size:0.9rem;">CI/CD Native</h3>
+        <p style="font-size:0.8rem;">GitHub Actions integration</p>
+      </div>
+      <div class="card green" style="text-align:center;">
+        <div style="font-size:2rem;margin-bottom:0.5rem;">&#x1f504;</div>
+        <h3 style="font-size:0.9rem;">Day-2 Ready</h3>
+        <p style="font-size:0.8rem;">Maintenance at scale</p>
+      </div>
+    </div>
+
+    <div style="margin-top:3rem;display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;">
+      <div class="tag orange" style="font-size:0.85rem;padding:0.4rem 1rem;">claude.ai/code</div>
+      <div class="tag purple" style="font-size:0.85rem;padding:0.4rem 1rem;">Opus 4.6 Model</div>
+      <div class="tag blue" style="font-size:0.85rem;padding:0.4rem 1rem;">npm install -g @anthropic-ai/claude-code</div>
+    </div>
+
+    <div style="margin-top:2.5rem;color:var(--text-muted);font-size:1rem;">
+      Questions? Let's discuss! &#x1f4ac;
+    </div>
+  </div>
+</section>
+
+</div><!-- end slides-container -->
+
+<!-- ── Keyboard Nav ── -->
+<div class="keyboard-nav">
+  <span class="kbd-hint">Navigate:</span>
+  <div class="kbd" onclick="goToSlide(currentSlide - 1)" title="Previous slide">&uarr;</div>
+  <div class="kbd" onclick="goToSlide(currentSlide + 1)" title="Next slide">&darr;</div>
+</div>
+
+<!-- ════════════════ JAVASCRIPT ════════════════ -->
+<script>
+  const slidesContainer = document.getElementById('slidesContainer');
+  const slides = document.querySelectorAll('.slide');
+  const navLinks = document.querySelectorAll('.nav-links a');
+  const slideCounter = document.getElementById('slideCounter');
+  const progressBar = document.getElementById('progressBar');
+  const totalSlides = slides.length;
+  let currentSlide = 0;
+  let isScrolling = false;
+
+  // ── Intersection Observer for slide visibility ──
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const slideIndex = Array.from(slides).indexOf(entry.target);
+        currentSlide = slideIndex;
+        updateNav(slideIndex);
+
+        // Animate slide content
+        const inner = entry.target.querySelector('.slide-inner');
+        if (inner) {
+          setTimeout(() => inner.classList.add('visible'), 100);
+        }
+      } else {
+        const inner = entry.target.querySelector('.slide-inner');
+        if (inner) inner.classList.remove('visible');
+      }
+    });
+  }, {
+    root: slidesContainer,
+    threshold: 0.5
+  });
+
+  slides.forEach(slide => observer.observe(slide));
+
+  function updateNav(index) {
+    navLinks.forEach(link => link.classList.remove('active'));
+    const activeLink = document.querySelector(`.nav-links a[data-slide="${index}"]`);
+    if (activeLink) activeLink.classList.add('active');
+    slideCounter.textContent = `${index + 1} / ${totalSlides}`;
+    progressBar.style.width = `${((index + 1) / totalSlides) * 100}%`;
+  }
+
+  function goToSlide(index) {
+    if (index < 0 || index >= totalSlides) return;
+    slides[index].scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // ── Keyboard navigation ──
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+      e.preventDefault();
+      goToSlide(currentSlide + 1);
+    } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      e.preventDefault();
+      goToSlide(currentSlide - 1);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      goToSlide(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      goToSlide(totalSlides - 1);
+    }
+  });
+
+  // ── Nav link clicks ──
+  navLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const slideIndex = parseInt(link.dataset.slide);
+      goToSlide(slideIndex);
+    });
+  });
+
+  // ── Expandable sections ──
+  function toggleExpand(header) {
+    const content = header.nextElementSibling;
+    header.classList.toggle('open');
+    content.classList.toggle('open');
+  }
+
+  // ── Theme Toggle ──
+  function toggleTheme() {
+    const html = document.documentElement;
+    const current = html.getAttribute('data-theme');
+    const next = current === 'light' ? 'dark' : 'light';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('claude-deck-theme', next);
+  }
+
+  // Restore saved theme
+  (function() {
+    const saved = localStorage.getItem('claude-deck-theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+  })();
+
+  // ── Initial state ──
+  updateNav(0);
+  setTimeout(() => {
+    const firstInner = slides[0].querySelector('.slide-inner');
+    if (firstInner) firstInner.classList.add('visible');
+  }, 300);
+</script>
+
+</body>
+</html>
